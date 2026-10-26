@@ -4,7 +4,8 @@
   "extends": ["github>sidalit/snap-automation#v1.1.0"],
   "packageRules": [
     {
-      "matchDepNames": ["ente/ente"],
+      "matchDepNames": ["upstream"],
+      "overridePackageName": "ente/ente",
       "extractVersion": "^auth-v(?<version>.+)$"
     }
   ]
