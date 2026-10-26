@@ -42,7 +42,29 @@ apps:
       - dbus-ente-auth
 
 parts:
+  flutter:
+    plugin: nil
+    source: https://github.com/flutter/flutter.git
+    # Match Ente's .github/actions/setup-flutter/action.yml.
+    source-tag: '3.47.2'
+    source-depth: 1
+    build-packages:
+      - ca-certificates
+      - curl
+      - git
+      - unzip
+      - xz-utils
+    override-build: |
+      mkdir -p "$CRAFT_PART_INSTALL/usr/libexec/flutter"
+      cp -a "$CRAFT_PART_SRC/." "$CRAFT_PART_INSTALL/usr/libexec/flutter/"
+      export PATH="$CRAFT_PART_INSTALL/usr/libexec/flutter/bin:$PATH"
+      flutter config --enable-linux-desktop --no-analytics
+      flutter precache --linux
+    prime:
+      - -*
+
   ente-auth:
+    after: [flutter]
     plugin: nil
     source: https://github.com/ente/ente.git
     source-tag: auth-v$SNAPCRAFT_PROJECT_VERSION
@@ -53,10 +75,8 @@ parts:
       - LIBSODIUM_USE_PKGCONFIG: '1'
       - CXXFLAGS: -Wno-error=deprecated-literal-operator
     build-packages:
-      - ca-certificates
       - clang
       - cmake
-      - curl
       - default-jdk-headless
       - git
       - libayatana-appindicator3-dev
@@ -70,8 +90,6 @@ parts:
       - ninja-build
       - patch
       - pkg-config
-      - unzip
-      - xz-utils
     stage-packages:
       - libayatana-appindicator3-1
       - libcurl4t64
@@ -84,14 +102,7 @@ parts:
       craftctl default
       patch -p1 < "$CRAFT_PROJECT_DIR/snap/patches/snap-desktop.patch"
     override-build: |
-      flutter_version=$(sed -n 's/^[[:space:]]*FLUTTER_VERSION: //p' .github/actions/setup-flutter/action.yml)
-      if [ ! -d "$CRAFT_PART_BUILD/.flutter" ]; then
-        git clone --depth 1 --branch "$flutter_version" \
-          https://github.com/flutter/flutter.git "$CRAFT_PART_BUILD/.flutter"
-      fi
-      export PATH="$CRAFT_PART_BUILD/.flutter/bin:$PATH"
-      flutter config --enable-linux-desktop --no-analytics
-
+      export PATH="$CRAFT_STAGE/usr/libexec/flutter/bin:$PATH"
       cd mobile/apps/auth
       flutter pub get --enforce-lockfile
       flutter build linux --release --no-pub
