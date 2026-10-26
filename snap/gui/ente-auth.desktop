@@ -1,0 +1,13 @@
+[Desktop Entry]
+Name=Ente Auth
+GenericName=Authenticator
+Comment=Generate two-factor authentication codes with encrypted backups and sync
+Exec=ente-auth %U
+Icon=${SNAP}/meta/gui/ente-auth.png
+Terminal=false
+Type=Application
+Categories=Utility;Security;
+Keywords=Authentication;Authenticator;2FA;TOTP;OTP;
+MimeType=x-scheme-handler/enteauth;
+StartupNotify=false
+StartupWMClass=io.ente.auth

@@ -1,0 +1,104 @@
+name: ente-auth
+base: core26
+version: '4.4.26'
+title: Ente Auth
+icon: snap/gui/ente-auth.png
+summary: Two-factor authentication with encrypted backups and sync
+description: |
+  Ente Auth generates two-factor authentication codes and provides end-to-end
+  encrypted backups and synchronization. It supports offline use, imports and
+  exports, and desktop access to authentication codes.
+license: AGPL-3.0-only
+grade: stable
+confinement: strict
+website: https://ente.io/auth/
+source-code:
+  - https://github.com/ente/ente
+  - https://github.com/sidalit/ente-auth-snap
+issues:
+  - https://github.com/ente/ente/issues
+  - https://github.com/sidalit/ente-auth-snap/issues
+contact: https://github.com/sidalit/ente-auth-snap/issues
+
+platforms:
+  amd64:
+  arm64:
+
+slots:
+  dbus-ente-auth:
+    interface: dbus
+    bus: session
+    name: io.ente.auth
+
+apps:
+  ente-auth:
+    command: opt/ente-auth/enteauth
+    extensions: [gnome]
+    plugs:
+      - network
+      - home
+      - removable-media
+    slots:
+      - dbus-ente-auth
+
+parts:
+  ente-auth:
+    plugin: nil
+    source: https://github.com/ente/ente.git
+    source-tag: auth-v$SNAPCRAFT_PROJECT_VERSION
+    source-depth: 1
+    source-submodules:
+      - mobile/apps/auth/assets/simple-icons
+    build-environment:
+      - LIBSODIUM_USE_PKGCONFIG: '1'
+      - CXXFLAGS: -Wno-error=deprecated-literal-operator
+    build-packages:
+      - ca-certificates
+      - clang
+      - cmake
+      - curl
+      - default-jdk-headless
+      - git
+      - libayatana-appindicator3-dev
+      - libcurl4-openssl-dev
+      - libffi-dev
+      - libgtk-3-dev
+      - libsecret-1-dev
+      - libsodium-dev
+      - libsqlite3-dev
+      - libx11-dev
+      - ninja-build
+      - patch
+      - pkg-config
+      - unzip
+      - xz-utils
+    stage-packages:
+      - libayatana-appindicator3-1
+      - libcurl4t64
+      - libsodium23
+      - libsqlite3-0
+    prime:
+      # JNI is used only by Android dependencies, not the Linux application.
+      - -opt/ente-auth/lib/libdartjni.so
+    override-pull: |
+      craftctl default
+      patch -p1 < "$CRAFT_PROJECT_DIR/snap/patches/snap-desktop.patch"
+    override-build: |
+      flutter_version=$(sed -n 's/^[[:space:]]*FLUTTER_VERSION: //p' .github/actions/setup-flutter/action.yml)
+      if [ ! -d "$CRAFT_PART_BUILD/.flutter" ]; then
+        git clone --depth 1 --branch "$flutter_version" \
+          https://github.com/flutter/flutter.git "$CRAFT_PART_BUILD/.flutter"
+      fi
+      export PATH="$CRAFT_PART_BUILD/.flutter/bin:$PATH"
+      flutter config --enable-linux-desktop --no-analytics
+
+      cd mobile/apps/auth
+      flutter pub get --enforce-lockfile
+      flutter build linux --release --no-pub
+      mkdir -p "$CRAFT_PART_INSTALL/opt/ente-auth"
+      cp -a build/linux/*/release/bundle/. "$CRAFT_PART_INSTALL/opt/ente-auth/"
+
+      install -Dm644 "$CRAFT_PROJECT_DIR/snap/gui/ente-auth.png" \
+        "$CRAFT_PART_INSTALL/usr/share/icons/hicolor/256x256/apps/io.ente.auth.png"
+      install -Dm644 "$CRAFT_PART_BUILD/LICENSE" \
+        "$CRAFT_PART_INSTALL/usr/share/doc/ente-auth/LICENSE"

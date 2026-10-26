@@ -1,0 +1,56 @@
+diff --git a/mobile/apps/auth/lib/services/update_service.dart b/mobile/apps/auth/lib/services/update_service.dart
+--- a/mobile/apps/auth/lib/services/update_service.dart
++++ b/mobile/apps/auth/lib/services/update_service.dart
+@@ -116,6 +116,9 @@
+   }
+ 
+   bool supportsInAppUpdates() {
++    if (Platform.environment.containsKey("SNAP")) {
++      return false;
++    }
+     return appFlavor == "independent" || PlatformDetector.isDesktop();
+   }
+ }
+diff --git a/mobile/packages/lock_screen/lib/local_authentication_service.dart b/mobile/packages/lock_screen/lib/local_authentication_service.dart
+--- a/mobile/packages/lock_screen/lib/local_authentication_service.dart
++++ b/mobile/packages/lock_screen/lib/local_authentication_service.dart
+@@ -245,7 +245,7 @@
+   }
+ 
+   Future<LinuxLocalAuthSetupStatus?> getLinuxLocalAuthSetupStatus() async {
+-    if (!Platform.isLinux) {
++    if (!Platform.isLinux || Platform.environment.containsKey("SNAP")) {
+       return null;
+     }
+     try {
+diff --git a/mobile/packages/lock_screen/lib/ui/lock_screen_options.dart b/mobile/packages/lock_screen/lib/ui/lock_screen_options.dart
+--- a/mobile/packages/lock_screen/lib/ui/lock_screen_options.dart
++++ b/mobile/packages/lock_screen/lib/ui/lock_screen_options.dart
+@@ -233,16 +233,17 @@
+                                       MenuGroupComponent(
+                                         showDividers: true,
+                                         items: [
+-                                          MenuComponent(
+-                                            title: context.strings.deviceLock,
+-                                            trailing: isSystemLockEnabled
+-                                                ? Icon(
+-                                                    Icons.check,
+-                                                    color: colors.textBase,
+-                                                  )
+-                                                : null,
+-                                            onTap: () => _deviceLock(),
+-                                          ),
++                                          if (!Platform.environment.containsKey("SNAP"))
++                                            MenuComponent(
++                                              title: context.strings.deviceLock,
++                                              trailing: isSystemLockEnabled
++                                                  ? Icon(
++                                                      Icons.check,
++                                                      color: colors.textBase,
++                                                    )
++                                                  : null,
++                                              onTap: () => _deviceLock(),
++                                            ),
+                                           MenuComponent(
+                                             title: context.strings.pinLock,
+                                             trailing: isPinEnabled
