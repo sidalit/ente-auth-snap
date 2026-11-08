@@ -94,7 +94,6 @@ parts:
       - libayatana-appindicator3-1
       - libcurl4t64
       - libsodium23
-      - libsqlite3-0
     prime:
       # JNI is used only by Android dependencies, not the Linux application.
       - -opt/ente-auth/lib/libdartjni.so
