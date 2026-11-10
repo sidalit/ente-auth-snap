@@ -74,6 +74,10 @@ parts:
     build-environment:
       - LIBSODIUM_USE_PKGCONFIG: '1'
       - CXXFLAGS: -Wno-error=deprecated-literal-operator
+      - PATH: $HOME/.cargo/bin:$PATH
+    # Cargokit builds the flutter_rust_bridge library and needs rustup.
+    build-snaps:
+      - rustup/latest/stable
     build-packages:
       - clang
       - cmake
@@ -104,6 +108,13 @@ parts:
       export PATH="$CRAFT_STAGE/usr/libexec/flutter/bin:$PATH"
       cd mobile/apps/auth
       flutter pub get --enforce-lockfile
+      # Sources with flutter_rust_bridge need generated Dart bindings, as in
+      # upstream CI; the Flutter build then compiles the Rust library.
+      if [ -f flutter_rust_bridge.yaml ]; then
+        rustup set profile minimal
+        rustup default stable
+        (cd "$CRAFT_PART_BUILD/rust" && cargo codegen frb auth)
+      fi
       flutter build linux --release --no-pub
       mkdir -p "$CRAFT_PART_INSTALL/opt/ente-auth"
       cp -a build/linux/*/release/bundle/. "$CRAFT_PART_INSTALL/opt/ente-auth/"
