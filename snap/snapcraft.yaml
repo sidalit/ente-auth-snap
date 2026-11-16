@@ -113,6 +113,7 @@ parts:
       if [ -f flutter_rust_bridge.yaml ]; then
         rustup set profile minimal
         rustup default stable
+        rustup component add rustfmt
         (cd "$CRAFT_PART_BUILD/rust" && cargo codegen frb auth)
       fi
       flutter build linux --release --no-pub
